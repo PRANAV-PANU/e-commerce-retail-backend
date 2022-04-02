@@ -1,7 +1,7 @@
 // All the utility functions for routing are here
 
 const model = require('../Model/dbSchema.js');
-
+const services = require('../utilities/validators.js');
 exports.getAllUsers = async (req, res, next) => {
     try {
         const allUsers = await model.loginModel.find({}, { _id: 0, __v: 0 });
@@ -20,10 +20,28 @@ exports.getAllUsers = async (req, res, next) => {
 };
 exports.registerUser = async (req, res, next) => {
     try {
-        const newUser = await model.loginModel.create(req.body);
-        if (newUser.length != 0) {
-            res.status(200).json({
-                message: `User registered with username : ${newUser.username}`,
+        if (services.validateName(req.body.username)) {
+            if (services.validatePassword(req.body.password)) {
+                if (services.validatePhone(req.body.phoneNumber)) {
+                    const newUser = await model.loginModel.create(req.body);
+                    if (newUser.length != 0) {
+                        res.status(200).json({
+                            message: `User registered with username : ${newUser.username}`,
+                        });
+                    }
+                } else {
+                    res.status(400).json({
+                        message: "Phone number should be 10 digits",
+                    });
+                }
+            } else {
+                res.status(400).json({
+                    message: "Password should have minimum 5 characters",
+                });
+            }
+        } else {
+            res.status(400).json({
+                message: "Name cannot be empty",
             });
         }
     } catch (err) {
